@@ -44,23 +44,24 @@ const els = {
 
 let identity = null;
 let knownHosts = [];
-let realmConnected = false;
 
 // ---- Realm size (Status page) ----
 // Counts come straight from AreteModel's structural parse of the live keys —
 // the same numbers the Home/Contexts/Connections views are built from — so the
-// summary can never disagree with the detail views. Updates live on every keys
-// push; shows dashes until connected.
+// summary can never disagree with the detail views. "Connected" is derived
+// from keys presence exactly like those views (NOT a separate status flag),
+// and it re-renders on every keys push.
 function renderRealmCounts() {
   const AM = window.AreteModel;
   if (!AM) return;
-  if (!realmConnected) {
+  const keys = AM.getKeys();
+  if (!Object.keys(keys).length) {
     for (const k in els.rc) els.rc[k].textContent = '—';
     els.realmSizeNote.textContent = 'not connected';
     els.realmSubStats.textContent = '';
     return;
   }
-  const c = AM.parseKeys(AM.getKeys()).counts;
+  const c = AM.parseKeys(keys).counts;
   els.rc.systems.textContent = c.systems;
   els.rc.nodes.textContent = c.nodes;
   els.rc.contexts.textContent = c.contexts;
@@ -73,6 +74,23 @@ function renderRealmCounts() {
     `<b>${c.capabilities}</b> capabilit${c.capabilities === 1 ? 'y' : 'ies'} declared ` +
     `· <b>${c.providers}</b> provider${c.providers === 1 ? '' : 's'} ` +
     `· <b>${c.consumers}</b> consumer${c.consumers === 1 ? '' : 's'}${unbound}`;
+}
+
+// Register the live subscription + paint once, the same way the other views do
+// (onChange + immediate render). renderer.js loads BEFORE arete-model.js, so we
+// wait for DOMContentLoaded — by then every view script has run and
+// window.AreteModel exists and is already primed. Registering synchronously
+// here (rather than after an await in init) is what makes us catch the very
+// first keys push on a static realm.
+function wireRealmCounts() {
+  if (!window.AreteModel) return;
+  window.AreteModel.onChange(renderRealmCounts);
+  renderRealmCounts();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireRealmCounts);
+} else {
+  wireRealmCounts();
 }
 
 // Past-hosts dropdown: fill the datalist, and when a remembered host is picked
@@ -157,20 +175,13 @@ function renderStatus(st) {
   els.connectBtn.disabled = connected || state === 'connecting';
   els.disconnectBtn.disabled = state === 'disconnected';
   els.registerBtn.disabled = !connected;
-
-  if (connected !== realmConnected) {
-    realmConnected = connected;
-    renderRealmCounts();
-  }
+  renderRealmCounts(); // keep the realm-size card fresh as state changes
 }
 
 async function init() {
   const d = await window.arete.getDefaults();
   identity = d.identity;
   if (d.appVersion && els.coreVersion) els.coreVersion.textContent = `core v${d.appVersion}`;
-  // Live realm-size counts: re-render on every keys push (AreteModel loaded after
-  // this script, so it's defined by the time this async init resumes).
-  if (window.AreteModel) window.AreteModel.onChange(renderRealmCounts);
   els.protocol.value = d.protocol;
   els.host.value = d.host;
   els.port.value = d.port;
