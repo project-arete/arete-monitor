@@ -78,12 +78,23 @@ window.AreteModel = (function () {
       const cap = caps[ck];
       unbound.push({ profile: cap.profile, role: cap.role, at: label(cap.ctxPath), props: cap.props });
     }
+    // Entity counts come from the FULL namespace — every registered system,
+    // node, and context (same derivation as the Home view's buildSystems) —
+    // NOT just capability-bearing ones, so a realm of registered nodes with no
+    // active capabilities still counts. Capabilities/providers/consumers are
+    // inherently capability-derived and stay sourced from caps.
     const systems = new Set(), nodes = new Set(), contexts = new Set();
+    for (const key in k) {
+      const m = key.match(/^cns\/([^/]+)(?:\/nodes\/([^/]+)(?:\/contexts\/([^/]+))?)?/);
+      if (!m) continue;
+      const [, sid, nid, cid] = m;
+      systems.add(sid);
+      if (nid) nodes.add(sid + '/' + nid);
+      if (cid) contexts.add(sid + '/' + nid + '/' + cid);
+    }
     let providers = 0, consumers = 0;
     for (const ck in caps) {
-      const cap = caps[ck]; const p = cap.ctxPath.split('/');
-      systems.add(p[1]); nodes.add(p[1] + '/' + p[3]); contexts.add(cap.ctxPath);
-      if (cap.role === 'provider') providers++; else consumers++;
+      if (caps[ck].role === 'provider') providers++; else consumers++;
     }
     return {
       caps, connections, unbound, nameOf, label,
