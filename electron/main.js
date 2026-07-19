@@ -200,6 +200,7 @@ app.whenReady().then(() => {
       systemSeed: seed,
       autoConnect: !!settings.autoConnect,
       rememberPassword: !!settings.rememberPassword,
+      appVersion: app.getVersion(), // Monitor's release version (package.json)
     };
   });
 

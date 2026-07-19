@@ -14,7 +14,7 @@
         <img class="logo" src="logo.png" alt="Arete" />
         <div>
           <h1>Arete Monitor</h1>
-          <p class="subtitle">CNS/CP realm monitoring · <span id="uiVersion">UI v20</span></p>
+          <p class="subtitle">CNS/CP realm monitoring · <span id="coreVersion" title="Monitor release version (from package.json)"></span><span id="uiVersion" title="internal UI build stamp"> · UI v21</span></p>
         </div>
       </div>
       <div class="realm-ind" id="realmInd" hidden>
@@ -104,6 +104,20 @@
 
       <!-- =========================== STATUS =========================== -->
       <div class="panel" id="panel-status" role="tabpanel" aria-labelledby="tab-status" hidden>
+        <section class="card">
+          <div class="card-head">
+            <h2>Realm size</h2>
+            <span class="muted-note" id="realmSizeNote">not connected</span>
+          </div>
+          <div class="realm-stats">
+            <div class="rstat"><div class="rstat-n" id="rc-systems">—</div><div class="rstat-l">Systems</div></div>
+            <div class="rstat"><div class="rstat-n" id="rc-nodes">—</div><div class="rstat-l">Nodes</div></div>
+            <div class="rstat"><div class="rstat-n" id="rc-contexts">—</div><div class="rstat-l">Contexts</div></div>
+            <div class="rstat"><div class="rstat-n" id="rc-connections">—</div><div class="rstat-l">Connections</div></div>
+          </div>
+          <div class="realm-substats muted-note" id="realmSubStats"></div>
+        </section>
+
         <section class="card">
           <h2>Status</h2>
           <dl class="status-grid">

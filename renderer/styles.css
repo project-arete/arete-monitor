@@ -161,6 +161,15 @@ button.ghost { background: transparent; border-color: transparent; color: var(--
 .status-grid dd { margin: 0; }
 .mono { font-family: var(--mono); font-size: 12px; word-break: break-all; }
 
+/* Realm-size stat tiles (Status page) — mirrors the Home view's .tile look. */
+.realm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.rstat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.rstat-n { font-size: 26px; font-weight: 650; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.rstat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+.realm-substats { margin-top: 12px; }
+.realm-substats b { color: var(--text); font-weight: 650; }
+@media (max-width: 620px) { .realm-stats { grid-template-columns: repeat(2, 1fr); } }
+
 .log {
   font-family: var(--mono); font-size: 12px; line-height: 1.55;
   background: #0b0e12; border: 1px solid var(--border); border-radius: 8px;

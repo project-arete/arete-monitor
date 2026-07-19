@@ -27,6 +27,10 @@ const els = {
   statusBadge: $('statusBadge'),
   panelStatus: $('panel-status'),
   log: $('log'),
+  coreVersion: $('coreVersion'),
+  realmSizeNote: $('realmSizeNote'),
+  realmSubStats: $('realmSubStats'),
+  rc: { systems: $('rc-systems'), nodes: $('rc-nodes'), contexts: $('rc-contexts'), connections: $('rc-connections') },
   s: {
     state: $('s-state'),
     open: $('s-open'),
@@ -40,6 +44,36 @@ const els = {
 
 let identity = null;
 let knownHosts = [];
+let realmConnected = false;
+
+// ---- Realm size (Status page) ----
+// Counts come straight from AreteModel's structural parse of the live keys —
+// the same numbers the Home/Contexts/Connections views are built from — so the
+// summary can never disagree with the detail views. Updates live on every keys
+// push; shows dashes until connected.
+function renderRealmCounts() {
+  const AM = window.AreteModel;
+  if (!AM) return;
+  if (!realmConnected) {
+    for (const k in els.rc) els.rc[k].textContent = '—';
+    els.realmSizeNote.textContent = 'not connected';
+    els.realmSubStats.textContent = '';
+    return;
+  }
+  const c = AM.parseKeys(AM.getKeys()).counts;
+  els.rc.systems.textContent = c.systems;
+  els.rc.nodes.textContent = c.nodes;
+  els.rc.contexts.textContent = c.contexts;
+  els.rc.connections.textContent = c.connections;
+  els.realmSizeNote.textContent = 'live';
+  const unbound = c.unbound
+    ? ` · <b>${c.unbound}</b> awaiting broker`
+    : '';
+  els.realmSubStats.innerHTML =
+    `<b>${c.capabilities}</b> capabilit${c.capabilities === 1 ? 'y' : 'ies'} declared ` +
+    `· <b>${c.providers}</b> provider${c.providers === 1 ? '' : 's'} ` +
+    `· <b>${c.consumers}</b> consumer${c.consumers === 1 ? '' : 's'}${unbound}`;
+}
 
 // Past-hosts dropdown: fill the datalist, and when a remembered host is picked
 // (or typed exactly), recall its connection shape — never the password.
@@ -123,11 +157,20 @@ function renderStatus(st) {
   els.connectBtn.disabled = connected || state === 'connecting';
   els.disconnectBtn.disabled = state === 'disconnected';
   els.registerBtn.disabled = !connected;
+
+  if (connected !== realmConnected) {
+    realmConnected = connected;
+    renderRealmCounts();
+  }
 }
 
 async function init() {
   const d = await window.arete.getDefaults();
   identity = d.identity;
+  if (d.appVersion && els.coreVersion) els.coreVersion.textContent = `core v${d.appVersion}`;
+  // Live realm-size counts: re-render on every keys push (AreteModel loaded after
+  // this script, so it's defined by the time this async init resumes).
+  if (window.AreteModel) window.AreteModel.onChange(renderRealmCounts);
   els.protocol.value = d.protocol;
   els.host.value = d.host;
   els.port.value = d.port;
