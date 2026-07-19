@@ -1,4 +1,4 @@
-# Arete Monitor (macOS / Electron)
+# Arete Monitor
 
 > **🖥️ Just want to install and use the app?**
 > **[Follow the step-by-step install guide →](INSTALL.md)** — direct download
@@ -25,7 +25,7 @@ applies no CP-specific health rules. It declares no CP itself (stub left in
 
 ## Requirements
 
-- macOS (this targets a `.app`/`.dmg`), Node.js 18+ and npm.
+- macOS, Windows, or Linux with Node.js 18+ and npm (development runs anywhere Electron does).
 - Network reach to your Arete control plane on the WebSocket port (usually 443).
 
 ## Run it (development)
@@ -49,10 +49,18 @@ ARETE_HOST=my.realm.example.com ARETE_USER=myuser ARETE_PASS=•••• \
   ARETE_ALLOW_SELF_SIGNED=1 npm run test:connect
 ```
 
-## Package it into a double-click app
+## Installers for every platform
 
-The goal: a single `.dmg` you open once, drag the app to Applications, and then
-launch like any other Mac app — no Terminal, no npm, ever again.
+Every tagged release is built automatically by GitHub Actions for **macOS
+(.dmg, Apple Silicon + Intel), Windows (installer .exe), and Linux (AppImage /
+.deb)** and attached to the [releases page](https://github.com/project-arete/arete-monitor/releases/latest)
+— see [INSTALL.md](INSTALL.md) for the non-technical walkthrough. So for most
+people, **there is nothing to build**.
+
+### Building locally (optional)
+
+You can still build your own installer — e.g. a `.dmg` you open once, drag the
+app to Applications, and launch like any other app, no Terminal or npm again.
 
 **Easiest — double-click the builder.** In Finder, double-click
 **`Build Arete Monitor.command`**. It installs dependencies (first run only),
@@ -71,13 +79,13 @@ and double-click it from Applications or Launchpad.
 
 Notes:
 
-- A macOS app can only be **built on macOS** — that's why this step runs on your
-  Mac rather than being produced for you elsewhere.
-- The build is **unsigned** (no paid Apple Developer account needed). On your own
-  machine it opens normally. If you send the `.dmg` to **someone else**, their Mac
-  will quarantine it — they right-click the app → Open the first time (or you add
-  Apple Developer ID signing + notarization to the `build.mac` block in
-  `package.json`).
+- A macOS installer can only be **built on macOS** (Windows/Linux installers
+  have their own targets: `npm run dist:win` / `npm run dist:linux`). The CI
+  release workflow builds all three platforms on tag push.
+- Builds are **unsigned** (no paid developer accounts needed). On your own
+  machine they open normally; anyone else gets a one-time security prompt —
+  [INSTALL.md](INSTALL.md) walks them through it (or add Developer ID /
+  code-signing config to the `build` block in `package.json`).
 - `arm64` is for Apple Silicon, `x64` for Intel Macs; `npm run dist` builds both.
 
 ## How it's wired
