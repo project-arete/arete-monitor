@@ -4,7 +4,9 @@
 
 import { app, BrowserWindow, ipcMain, shell, safeStorage } from 'electron';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -22,6 +24,35 @@ const fs = require('fs');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
+
+// ---- personalized default system name -------------------------------------
+// A brand-new user's Monitor defaults to "<First>'s Monitor" using the OS
+// account's real name — macOS: `id -F` (full name); Linux: the passwd GECOS
+// field; otherwise the login username. Falls back to "Arete Monitor" when
+// nothing usable is found. Only ever a SEED for the (editable) Monitor name — a
+// saved setting or ARETE_SYSTEM_NAME always wins.
+let _firstNameMemo; // undefined = not computed; null = none; string = first name
+function osFirstName() {
+  if (_firstNameMemo !== undefined) return _firstNameMemo;
+  _firstNameMemo = null;
+  let full = '';
+  try {
+    if (process.platform === 'darwin') {
+      full = execFileSync('id', ['-F'], { timeout: 800, encoding: 'utf8' }).trim();
+    } else if (process.platform === 'linux') {
+      const line = String(execFileSync('getent', ['passwd', os.userInfo().username], { timeout: 800, encoding: 'utf8' }));
+      full = (line.split(':')[4] || '').split(',')[0].trim();
+    }
+  } catch (_) { /* command missing or denied — fall through to username */ }
+  if (!full) { try { full = os.userInfo().username || ''; } catch (_) {} }
+  const tok = (full.match(/[\p{L}][\p{L}'’-]*/u) || [''])[0];
+  if (tok) _firstNameMemo = tok.charAt(0).toUpperCase() + tok.slice(1);
+  return _firstNameMemo;
+}
+function defaultSystemName() {
+  const fn = osFirstName();
+  return fn ? `${fn}'s Monitor` : 'Arete Monitor';
+}
 
 const service = new AreteService();
 let mainWindow = null;
@@ -162,7 +193,7 @@ app.whenReady().then(() => {
 
   // Small user-preferences store (monitor name, theme). Separate from the
   // future credentials/auto-connect config.
-  let settings = { monitorName: 'Arete Monitor', theme: 'dark', ...readJson('settings.json', {}) };
+  let settings = { monitorName: defaultSystemName(), theme: 'dark', ...readJson('settings.json', {}) };
   const saveSettings = (patch) => {
     settings = { ...settings, ...(patch || {}) };
     writeJson('settings.json', settings);
@@ -208,7 +239,7 @@ app.whenReady().then(() => {
     // Monitor name precedence: what the user typed > saved setting > env > default.
     const systemName =
       (opts && opts.systemName && String(opts.systemName).trim()) ||
-      settings.monitorName || env.ARETE_SYSTEM_NAME || 'Arete Monitor';
+      settings.monitorName || env.ARETE_SYSTEM_NAME || defaultSystemName();
     saveSettings({ monitorName: systemName });
     const status = await service.connect({ ...opts, systemName });
     // Remember this host (successful connects only, so typos never pile up).
