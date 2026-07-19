@@ -1,0 +1,83 @@
+{
+  "name": "arete-monitor",
+  "version": "0.2.0",
+  "description": "Arete Monitor — a macOS (Electron) dashboard for monitoring a CNS/CP realm: systems, nodes, contexts, connections, and a live knowledge graph.",
+  "author": "Anto <anto@padi.io>",
+  "license": "(MIT OR Apache-2.0)",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "postinstall": "node scripts/patch-sdk.js",
+    "patch": "node scripts/patch-sdk.js",
+    "start": "electron .",
+    "test:connect": "node scripts/test-connect.js",
+    "dist": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:all": "electron-builder --mac --win --linux",
+    "pack": "electron-builder --dir"
+  },
+  "dependencies": {
+    "arete-sdk": "^0.1.6"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.5"
+  },
+  "build": {
+    "appId": "io.padi.arete.monitor",
+    "productName": "Arete Monitor",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "renderer/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64", "arm64"] },
+        { "target": "deb", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "build/icon.png",
+      "category": "Network",
+      "artifactName": "Arete-Monitor-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "artifactName": "Arete-Monitor-Setup-${version}-${arch}.exe",
+      "shortcutName": "Arete Monitor"
+    },
+    "dmg": {
+      "title": "Arete Monitor ${version}",
+      "artifactName": "Arete-Monitor-${version}-${arch}.dmg",
+      "window": { "width": 540, "height": 380 },
+      "contents": [
+        { "x": 150, "y": 190, "type": "file" },
+        { "x": 390, "y": 190, "type": "link", "path": "/Applications" }
+      ]
+    }
+  }
+}
