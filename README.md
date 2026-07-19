@@ -1,5 +1,12 @@
 # Arete Monitor (macOS / Electron)
 
+> **🖥️ Just want to install and use the app?**
+> **[Follow the step-by-step install guide →](INSTALL.md)** — direct download
+> links for **macOS**, **Windows**, and **Linux**, written for non-technical
+> users. Heads-up: the installers are **not signed**, so your computer will
+> show a one-time security warning; the guide walks you through it.
+
+
 An **Electron** dashboard for monitoring an **Arete CNS/CP realm**, built on the
 Node [`arete-sdk`](https://github.com/project-arete/sdk). It connects and
 authenticates to a control plane, registers itself as the "Arete Monitor"
