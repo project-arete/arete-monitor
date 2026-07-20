@@ -6,7 +6,7 @@ steps.
 
 All downloads live on the
 **[latest release page](https://github.com/project-arete/arete-monitor/releases/latest)**.
-The links below point at the current version (v0.2.0); if a newer version
+The links below point at the current version (v0.2.1); if a newer version
 exists, grab the matching file from that page instead.
 
 > ### ⚠️ Before you start: expect a security warning
@@ -27,8 +27,8 @@ says *Intel*, you have an **Intel Mac**.
 
 **2. Download the right file:**
 
-- Apple Silicon: [Arete-Monitor-0.2.0-arm64.dmg](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-arm64.dmg)
-- Intel: [Arete-Monitor-0.2.0-x64.dmg](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-x64.dmg)
+- Apple Silicon: [Arete-Monitor-0.2.1-arm64.dmg](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-arm64.dmg)
+- Intel: [Arete-Monitor-0.2.1-x64.dmg](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-x64.dmg)
 
 **3. Install.** Open the downloaded `.dmg` and drag **Arete Monitor** onto the
 **Applications** folder shown next to it.
@@ -47,7 +47,7 @@ Control-click) Arete Monitor → Open**, then click **Open** in the dialog.
 ## Windows
 
 **1. Download the installer:**
-[Arete-Monitor-Setup-0.2.0.exe](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-Setup-0.2.0.exe)
+[Arete-Monitor-Setup-0.2.1.exe](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-Setup-0.2.1.exe)
 — this one works on both regular (Intel/AMD) and ARM Windows machines.
 
 **2. Run it.** Windows will likely show a blue **"Windows protected your
@@ -64,18 +64,18 @@ then **Run anyway**.
 **Option A — AppImage (works on most distributions):**
 
 1. Download the file for your machine:
-   - Regular PC (x86_64): [Arete-Monitor-0.2.0-x86_64.AppImage](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-x86_64.AppImage)
-   - ARM (e.g. Raspberry Pi 5 with a 64-bit desktop): [Arete-Monitor-0.2.0-arm64.AppImage](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-arm64.AppImage)
+   - Regular PC (x86_64): [Arete-Monitor-0.2.1-x86_64.AppImage](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-x86_64.AppImage)
+   - ARM (e.g. Raspberry Pi 5 with a 64-bit desktop): [Arete-Monitor-0.2.1-arm64.AppImage](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-arm64.AppImage)
 2. Make it runnable: right-click the file → **Properties → Permissions →
    allow executing as a program** (or in a terminal: `chmod +x Arete-Monitor-*.AppImage`).
 3. Double-click it to run. No installation needed — the file *is* the app.
 
 **Option B — Debian/Ubuntu package (.deb):**
 
-1. Download: [amd64 (regular PC)](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-amd64.deb)
-   or [arm64](https://github.com/project-arete/arete-monitor/releases/download/v0.2.0/Arete-Monitor-0.2.0-arm64.deb)
+1. Download: [amd64 (regular PC)](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-amd64.deb)
+   or [arm64](https://github.com/project-arete/arete-monitor/releases/download/v0.2.1/Arete-Monitor-0.2.1-arm64.deb)
 2. Double-click it to open your software installer, or in a terminal:
-   `sudo apt install ./Arete-Monitor-0.2.0-amd64.deb`
+   `sudo apt install ./Arete-Monitor-0.2.1-amd64.deb`
 3. Launch **Arete Monitor** from your applications menu.
 
 ---
