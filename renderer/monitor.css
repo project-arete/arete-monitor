@@ -217,3 +217,25 @@ body.light .mv .g-edge-conn.g-hot{stroke:#1c5cab;filter:drop-shadow(0 0 4px rgba
 body.light .mv .g-card{background:rgba(255,255,255,.95);}
 body.light .mv .lg-node{background:#dbe8fa;border-color:#2a78d6;}
 body.light .mv .lg-ctx{background:#e7e3fb;border-color:#7b6fe0;}
+
+/* ---- About the realm (Status tab) — prototype cp:local.realm.info ---- */
+.abar-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.abar-l { width: 74px; font-size: 12px; color: var(--muted); text-align: right; flex: none; }
+.abar { flex: 1; height: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.abar-fill { height: 100%; background: #2196f3; border-radius: 999px; transition: width 0.4s; }
+.abar-fill.load { background: var(--green); }
+.abar-fill.warn { background: var(--red); }
+.abar-v { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.about-src { margin: 10px 0 0; font-size: 11px; }
+
+/* ---- "What the realm reports (raw)" diagnostic (Status tab) ---- */
+.rr-grid { display: flex; flex-direction: column; gap: 2px; }
+.rr-row { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.rr-row:last-child { border-bottom: none; }
+.rr-k { color: var(--muted); font-size: 12px; }
+.rr-v { font-size: 12px; text-align: right; word-break: break-all; }
+.rr-sep { margin: 12px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+
+/* About card counters row (v27) — realm read/write/update/error counters */
+.rstat-counters { margin-top: 10px; }
+.rstat-warn { color: var(--red); }

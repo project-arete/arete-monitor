@@ -14,7 +14,7 @@
         <img class="logo" src="logo.png" alt="Arete" />
         <div>
           <h1>Arete Monitor</h1>
-          <p class="subtitle">CNS/CP realm monitoring · <span id="coreVersion" title="Monitor release version (from package.json)"></span><span id="uiVersion" title="internal UI build stamp"> · UI v23</span></p>
+          <p class="subtitle">CNS/CP realm monitoring · <span id="coreVersion" title="Monitor release version (from package.json)"></span><span id="uiVersion" title="internal UI build stamp"> · UI v30</span></p>
         </div>
       </div>
       <div class="realm-ind" id="realmInd" hidden>
@@ -49,42 +49,46 @@
       <div class="panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home" hidden>
         <section class="card">
           <h2>Connection</h2>
-          <form id="connectForm" class="grid">
-            <label>Protocol
-              <select id="protocol">
-                <option value="wss:">wss:</option>
-                <option value="ws:">ws:</option>
-              </select>
-            </label>
-            <label>Host <small>(▾ shows past hosts)</small>
-              <input id="host" type="text" placeholder="realm host, e.g. my.aretehosting.com" autocomplete="off" list="hostList" />
-              <datalist id="hostList"></datalist>
-            </label>
-            <label>Port
-              <input id="port" type="number" value="443" min="1" max="65535" />
-            </label>
-            <label>Username
-              <input id="username" type="text" autocomplete="off" />
-            </label>
-            <label>Password
-              <input id="password" type="password" autocomplete="off" />
-            </label>
-            <label>Monitor name <small>(this app's name in the realm)</small>
-              <input id="monitorName" type="text" placeholder="Arete Monitor" autocomplete="off" />
-            </label>
-            <label class="checkbox">
-              <input id="allowSelfSigned" type="checkbox" />
-              <span>Allow self-signed TLS <small>(insecure — only for hosts you trust)</small></span>
-            </label>
-            <label class="checkbox">
-              <input id="rememberPassword" type="checkbox" />
-              <span>Remember password <small>(stored encrypted via your macOS Keychain)</small></span>
-            </label>
-            <label class="checkbox">
-              <input id="autoConnect" type="checkbox" />
-              <span>Connect automatically on launch</span>
-            </label>
-
+          <form id="connectForm" class="conn-form">
+            <div class="conn-main">
+              <div class="conn-left">
+                <label><span>Host <small>(▾ shows past hosts)</small></span>
+                  <input id="host" type="text" placeholder="realm host, e.g. my.aretehosting.com" autocomplete="off" list="hostList" />
+                  <datalist id="hostList"></datalist>
+                </label>
+                <label>Realm token
+                  <input id="token" type="password" placeholder="paste the token issued for this realm" autocomplete="off" />
+                </label>
+                <label><span>System name <small>(this app’s name in the realm)</small></span>
+                  <input id="monitorName" type="text" placeholder="Arete Monitor" autocomplete="off" />
+                </label>
+              </div>
+              <div class="conn-right">
+                <label>Protocol
+                  <select id="protocol">
+                    <option value="wss:">wss:</option>
+                    <option value="ws:">ws:</option>
+                  </select>
+                </label>
+                <label>Port
+                  <input id="port" type="number" value="443" min="1" max="65535" />
+                </label>
+              </div>
+            </div>
+            <div class="conn-checks">
+              <label class="checkbox">
+                <input id="allowSelfSigned" type="checkbox" />
+                <span>Allow self-signed TLS <small>(insecure — only for hosts you trust)</small></span>
+              </label>
+              <label class="checkbox">
+                <input id="rememberToken" type="checkbox" />
+                <span>Remember token <small id="rememberNote">(encrypted by the OS keychain)</small></span>
+              </label>
+              <label class="checkbox">
+                <input id="autoConnect" type="checkbox" />
+                <span>Connect automatically on launch</span>
+              </label>
+            </div>
             <div class="actions">
               <button type="submit" id="connectBtn" class="primary">Connect</button>
               <button type="button" id="disconnectBtn" disabled>Disconnect</button>
@@ -105,6 +109,11 @@
       <!-- =========================== STATUS =========================== -->
       <div class="panel" id="panel-status" role="tabpanel" aria-labelledby="tab-status" hidden>
         <section class="card">
+          <h2>About the realm</h2>
+          <div id="aboutRealm"></div>
+        </section>
+
+        <section class="card">
           <div class="card-head">
             <h2>Realm size</h2>
             <span class="muted-note" id="realmSizeNote">not connected</span>
@@ -116,6 +125,14 @@
             <div class="rstat"><div class="rstat-n" id="rc-connections">—</div><div class="rstat-l">Connections</div></div>
           </div>
           <div class="realm-substats muted-note" id="realmSubStats"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>What the realm reports (raw)</h2>
+            <span class="muted-note">client-observed · designing cp:padi.test.realm.info</span>
+          </div>
+          <div id="realmStatsRaw"></div>
         </section>
 
         <section class="card">
@@ -163,6 +180,8 @@
 
     <script src="renderer.js"></script>
     <script src="arete-model.js"></script>
+    <script src="about-realm.js"></script>
+    <script src="realm-stats.js"></script>
     <script src="monitor.js"></script>
     <script src="connections.js"></script>
     <script src="contexts.js"></script>

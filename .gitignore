@@ -4,3 +4,6 @@ dist/
 .env
 .DS_Store
 npm-debug.log*
+
+_to_delete/
+.claude-commit-msg

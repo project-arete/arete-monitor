@@ -1,6 +1,6 @@
 {
   "name": "arete-monitor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Arete Monitor \u2014 a cross-platform (Electron) dashboard for monitoring a CNS/CP realm: systems, nodes, contexts, connections, and a live knowledge graph.",
   "author": "Anto <anto@padi.io>",
   "license": "(MIT OR Apache-2.0)",

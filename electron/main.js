@@ -202,35 +202,34 @@ app.whenReady().then(() => {
 
   ipcMain.handle('arete:getSettings', () => settings);
   ipcMain.handle('arete:saveSettings', (_evt, patch) => {
-    // turning "remember password" off wipes the stored (encrypted) password
-    if (patch && patch.rememberPassword === false) patch.passwordEnc = '';
+    // turning "remember token" off wipes the stored (encrypted) token
+    if (patch && patch.rememberToken === false) patch.tokenEnc = '';
     return saveSettings(patch);
   });
 
-  // Decrypt the remembered password (Keychain-backed via safeStorage), if any.
-  const savedPassword = () => {
-    if (!settings.rememberPassword || !settings.passwordEnc) return '';
+  // Decrypt the remembered per-realm token (Keychain-backed via safeStorage).
+  const savedToken = () => {
+    if (!settings.rememberToken || !settings.tokenEnc) return '';
     try {
       if (!safeStorage.isEncryptionAvailable()) return '';
-      return safeStorage.decryptString(Buffer.from(settings.passwordEnc, 'base64'));
+      return safeStorage.decryptString(Buffer.from(settings.tokenEnc, 'base64'));
     } catch (_) { return ''; }
   };
 
   // IPC: defaults for the Connect form — the last successful connection wins,
-  // then .env, then blanks. Password only if "remember password" is on.
+  // then .env, then blanks. Token only if "remember token" is on.
   ipcMain.handle('arete:getDefaults', () => {
     const lc = settings.lastConnect || {};
     return {
       protocol: lc.protocol || env.ARETE_PROTOCOL || 'wss:',
       host: lc.host || env.ARETE_HOST || '',
       port: lc.port || Number(env.ARETE_PORT || 443),
-      username: lc.username != null ? lc.username : (env.ARETE_USER || ''),
-      password: savedPassword() || env.ARETE_PASS || '',
+      token: savedToken() || env.ARETE_TOKEN || '',
       allowSelfSigned: lc.host ? !!lc.allowSelfSigned : (env.ARETE_ALLOW_SELF_SIGNED ?? '1') === '1',
       identity: ids,
       systemSeed: seed,
       autoConnect: !!settings.autoConnect,
-      rememberPassword: !!settings.rememberPassword,
+      rememberToken: !!settings.rememberToken,
       appVersion: app.getVersion(), // Monitor's release version (package.json)
     };
   });
@@ -243,17 +242,17 @@ app.whenReady().then(() => {
     saveSettings({ monitorName: systemName });
     const status = await service.connect({ ...opts, systemName });
     // Remember this host (successful connects only, so typos never pile up).
-    // Stores connection shape — protocol/port/username/TLS — never the password.
+    // Stores connection shape — protocol/port/TLS — never the token.
     const entry = {
       host: opts.host, protocol: opts.protocol, port: opts.port,
-      username: opts.username || '', allowSelfSigned: !!opts.allowSelfSigned,
+      allowSelfSigned: !!opts.allowSelfSigned,
       lastUsed: Date.now(),
     };
     const hosts = [entry, ...(settings.hosts || []).filter((h) => h.host !== opts.host)].slice(0, 10);
-    const patch = { hosts, lastConnect: { protocol: opts.protocol, host: opts.host, port: opts.port, username: opts.username || '', allowSelfSigned: !!opts.allowSelfSigned } };
-    // Remember the password (encrypted via the OS keychain) only when opted in.
-    if (settings.rememberPassword && opts.password && safeStorage.isEncryptionAvailable()) {
-      patch.passwordEnc = safeStorage.encryptString(opts.password).toString('base64');
+    const patch = { hosts, lastConnect: { protocol: opts.protocol, host: opts.host, port: opts.port, allowSelfSigned: !!opts.allowSelfSigned } };
+    // Remember the per-realm token (encrypted via the OS keychain) only when opted in.
+    if (settings.rememberToken && opts.token && safeStorage.isEncryptionAvailable()) {
+      patch.tokenEnc = safeStorage.encryptString(opts.token).toString('base64');
     }
     saveSettings(patch);
     return status;

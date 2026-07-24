@@ -8,8 +8,7 @@ const els = {
   protocol: $('protocol'),
   host: $('host'),
   port: $('port'),
-  username: $('username'),
-  password: $('password'),
+  token: $('token'),
   allowSelfSigned: $('allowSelfSigned'),
   connectBtn: $('connectBtn'),
   disconnectBtn: $('disconnectBtn'),
@@ -20,7 +19,7 @@ const els = {
   hostList: $('hostList'),
   realmInd: $('realmInd'),
   realmHost: $('realmHost'),
-  rememberPassword: $('rememberPassword'),
+  rememberToken: $('rememberToken'),
   autoConnect: $('autoConnect'),
   statusDot: $('statusDot'),
   statePill: $('statePill'),
@@ -94,7 +93,7 @@ if (document.readyState === 'loading') {
 }
 
 // Past-hosts dropdown: fill the datalist, and when a remembered host is picked
-// (or typed exactly), recall its connection shape — never the password.
+// (or typed exactly), recall its connection shape — never the token.
 function refreshHosts(hosts) {
   knownHosts = hosts || [];
   els.hostList.innerHTML = knownHosts
@@ -106,7 +105,6 @@ function applyKnownHost(value) {
   if (!h) return;
   if (h.protocol) els.protocol.value = h.protocol;
   if (h.port) els.port.value = h.port;
-  els.username.value = h.username || '';
   els.allowSelfSigned.checked = !!h.allowSelfSigned;
 }
 
@@ -185,8 +183,7 @@ async function init() {
   els.protocol.value = d.protocol;
   els.host.value = d.host;
   els.port.value = d.port;
-  els.username.value = d.username;
-  els.password.value = d.password;
+  els.token.value = d.token;
   els.allowSelfSigned.checked = !!d.allowSelfSigned;
 
   // user preferences: monitor name + theme + past hosts
@@ -197,13 +194,13 @@ async function init() {
   els.themeLight.checked = light;
   refreshHosts(s.hosts);
 
-  els.rememberPassword.checked = !!d.rememberPassword;
+  els.rememberToken.checked = !!d.rememberToken;
   els.autoConnect.checked = !!d.autoConnect;
 
   window.arete.onLog(logLine);
   window.arete.onStatus(renderStatus);
   renderStatus(await window.arete.getStatus());
-  logLine({ level: 'info', message: 'Ready. Enter credentials and Connect.', ts: Date.now() });
+  logLine({ level: 'info', message: 'Ready. Enter your realm token and Connect.', ts: Date.now() });
 
   // Auto-connect on launch: opt-in, and only when a host is known.
   if (d.autoConnect && els.host.value.trim()) {
@@ -218,8 +215,7 @@ async function doConnect(isAuto) {
     protocol: els.protocol.value,
     host: els.host.value.trim(),
     port: Number(els.port.value),
-    username: els.username.value.trim(),
-    password: els.password.value,
+    token: els.token.value.trim(),
     allowSelfSigned: els.allowSelfSigned.checked,
     systemName: els.monitorName.value.trim() || 'Arete Monitor',
   };
@@ -257,8 +253,8 @@ els.registerBtn.addEventListener('click', async () => {
 
 els.clearLogBtn.addEventListener('click', () => (els.log.innerHTML = ''));
 
-els.rememberPassword.addEventListener('change', () =>
-  window.arete.saveSettings({ rememberPassword: els.rememberPassword.checked }));
+els.rememberToken.addEventListener('change', () =>
+  window.arete.saveSettings({ rememberToken: els.rememberToken.checked }));
 els.autoConnect.addEventListener('change', () =>
   window.arete.saveSettings({ autoConnect: els.autoConnect.checked }));
 
