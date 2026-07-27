@@ -145,6 +145,11 @@ export class AreteService extends EventEmitter {
     const Client = await loadClient();
 
     this.#client = new Client({ protocol, host, port, token });
+    // Identity guard: every handler below is bound to THIS client. A client
+    // discarded by a later connect/disconnect must never drive service state
+    // again (stale events caused phantom "Disconnected" + log spam).
+    const boundClient = this.#client;
+    const stale = () => this.#client !== boundClient;
 
     // Resolves when the first update (initial cache snapshot) has been merged —
     // the SDK emits 'open' exactly then. Registering/renaming before that loses
@@ -152,16 +157,19 @@ export class AreteService extends EventEmitter {
     const firstUpdate = new Promise((res) => this.#client.on('open', res));
 
     // Forward the SDK's own lifecycle events to the log/UI.
-    this.#client.on('open', () => this.#log('info', 'Control plane channel open (first update received).'));
+    this.#client.on('open', () => { if (!stale()) this.#log('info', 'Control plane channel open (first update received).'); });
     this.#client.on('update', () => {
+      if (stale()) return;
       this.emit('status', this.getStatus());
       this.#scheduleKeysPush();
     });
     this.#client.on('close', () => {
+      if (stale()) return;
       this.#log('warn', 'Connection closed by host.');
       this.#setState('disconnected');
     });
     this.#client.on('error', (err) => {
+      if (stale()) return;
       this.#lastError = String(err && err.message ? err.message : err);
       this.#log('error', `Socket error: ${this.#lastError}`);
       this.#setState('error');

@@ -200,19 +200,48 @@ app.whenReady().then(() => {
     return settings;
   };
 
-  ipcMain.handle('arete:getSettings', () => settings);
+  // Hosts as the renderer may see them: per-host tokenEnc blobs stripped,
+  // replaced by a hasToken hint (so the UI can say "token remembered").
+  const publicHosts = () =>
+    (settings.hosts || []).map(({ tokenEnc, ...h }) => ({ ...h, hasToken: !!tokenEnc }));
+
+  // Never let ciphertext cross into the renderer — not even on the return
+  // value of a settings write.
+  const publicSettings = () => ({ ...settings, tokenEnc: undefined, hosts: publicHosts() });
+
+  ipcMain.handle('arete:getSettings', () => publicSettings());
   ipcMain.handle('arete:saveSettings', (_evt, patch) => {
-    // turning "remember token" off wipes the stored (encrypted) token
-    if (patch && patch.rememberToken === false) patch.tokenEnc = '';
-    return saveSettings(patch);
+    // turning "remember token" off wipes every stored (encrypted) token —
+    // the legacy top-level one AND each host-history entry's own
+    if (patch && patch.rememberToken === false) {
+      patch.tokenEnc = '';
+      patch.hosts = (settings.hosts || []).map(({ tokenEnc, ...h }) => h);
+    }
+    saveSettings(patch);
+    return publicSettings();
   });
 
-  // Decrypt the remembered per-realm token (Keychain-backed via safeStorage).
-  const savedToken = () => {
-    if (!settings.rememberToken || !settings.tokenEnc) return '';
+  // MIGRATION (one-time, pre-per-realm installs): the old top-level token
+  // belonged to whichever realm was connected last. Move it into THAT host's
+  // entry and drop it, so a token can never be recalled for a realm it was
+  // not issued for. Anything we cannot attribute to a host is discarded —
+  // the user re-enters it once, which is the safe failure.
+  if (settings.tokenEnc) {
+    const lcHost = (settings.lastConnect || {}).host;
+    const hosts = (settings.hosts || []).map((h) =>
+      h.host === lcHost && !h.tokenEnc ? { ...h, tokenEnc: settings.tokenEnc } : h);
+    saveSettings({ hosts, tokenEnc: '' });
+  }
+
+  // Per-realm token from the host-history entry (strict: no legacy fallback,
+  // so one realm's token is never recalled for another).
+  const entryToken = (host) => {
+    if (!settings.rememberToken || !host) return '';
+    const h = (settings.hosts || []).find((x) => x.host === host);
+    if (!h || !h.tokenEnc) return '';
     try {
       if (!safeStorage.isEncryptionAvailable()) return '';
-      return safeStorage.decryptString(Buffer.from(settings.tokenEnc, 'base64'));
+      return safeStorage.decryptString(Buffer.from(h.tokenEnc, 'base64'));
     } catch (_) { return ''; }
   };
 
@@ -224,12 +253,13 @@ app.whenReady().then(() => {
       protocol: lc.protocol || env.ARETE_PROTOCOL || 'wss:',
       host: lc.host || env.ARETE_HOST || '',
       port: lc.port || Number(env.ARETE_PORT || 443),
-      token: savedToken() || env.ARETE_TOKEN || '',
+      token: entryToken(lc.host) || env.ARETE_TOKEN || '',
       allowSelfSigned: lc.host ? !!lc.allowSelfSigned : (env.ARETE_ALLOW_SELF_SIGNED ?? '1') === '1',
       identity: ids,
       systemSeed: seed,
       autoConnect: !!settings.autoConnect,
       rememberToken: !!settings.rememberToken,
+      canRememberToken: safeStorage.isEncryptionAvailable(),
       appVersion: app.getVersion(), // Monitor's release version (package.json)
     };
   });
@@ -242,21 +272,41 @@ app.whenReady().then(() => {
     saveSettings({ monitorName: systemName });
     const status = await service.connect({ ...opts, systemName });
     // Remember this host (successful connects only, so typos never pile up).
-    // Stores connection shape — protocol/port/TLS — never the token.
+    // Stores connection shape — protocol/port/TLS — plus, when "remember
+    // token" is on, this realm's OWN token (keychain-encrypted). An empty
+    // token on a successful connect drops any stale one for this host.
     const entry = {
       host: opts.host, protocol: opts.protocol, port: opts.port,
       allowSelfSigned: !!opts.allowSelfSigned,
       lastUsed: Date.now(),
     };
-    const hosts = [entry, ...(settings.hosts || []).filter((h) => h.host !== opts.host)].slice(0, 10);
-    const patch = { hosts, lastConnect: { protocol: opts.protocol, host: opts.host, port: opts.port, allowSelfSigned: !!opts.allowSelfSigned } };
-    // Remember the per-realm token (encrypted via the OS keychain) only when opted in.
     if (settings.rememberToken && opts.token && safeStorage.isEncryptionAvailable()) {
-      patch.tokenEnc = safeStorage.encryptString(opts.token).toString('base64');
+      entry.tokenEnc = safeStorage.encryptString(opts.token).toString('base64');
     }
+    const hosts = [entry, ...(settings.hosts || []).filter((h) => h.host !== opts.host)].slice(0, 10);
+    // tokenEnc always cleared: tokens live in their own host entry now, and a
+    // stale top-level one would belong to whichever realm set it last.
+    const patch = {
+      hosts,
+      tokenEnc: '',
+      lastConnect: { protocol: opts.protocol, host: opts.host, port: opts.port, allowSelfSigned: !!opts.allowSelfSigned },
+    };
     saveSettings(patch);
     return status;
   });
+  // Recall a past host's connection shape + its remembered token. The token
+  // is decrypted only here in main, on request for one named host — the
+  // renderer never receives other realms' tokens unasked.
+  ipcMain.handle('arete:recallHost', (_evt, host) => {
+    const h = (settings.hosts || []).find((x) => x.host === host);
+    if (!h) return null;
+    return {
+      host: h.host, protocol: h.protocol, port: h.port,
+      allowSelfSigned: !!h.allowSelfSigned,
+      token: entryToken(host), hasToken: !!h.tokenEnc,
+    };
+  });
+
   ipcMain.handle('arete:disconnect', async () => {
     await service.disconnect();
     return service.getStatus();

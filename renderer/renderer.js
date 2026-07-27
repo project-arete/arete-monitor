@@ -93,19 +93,43 @@ if (document.readyState === 'loading') {
 }
 
 // Past-hosts dropdown: fill the datalist, and when a remembered host is picked
-// (or typed exactly), recall its connection shape — never the token.
+// (or typed exactly), recall its connection shape AND its own remembered
+// token (each realm's token lives in its history entry, keychain-encrypted).
 function refreshHosts(hosts) {
   knownHosts = hosts || [];
   els.hostList.innerHTML = knownHosts
-    .map((h) => `<option value="${h.host.replace(/"/g, '&quot;')}"></option>`)
+    .map((h) => `<option value="${h.host.replace(/"/g, '&quot;')}"${h.hasToken ? ' label="token remembered"' : ''}></option>`)
     .join('');
 }
-function applyKnownHost(value) {
+// True while the token field holds a value WE put there (recalled/default) —
+// user input clears it. Only auto-filled tokens may be replaced or cleared on
+// a host switch; a token the user typed or pasted is NEVER silently wiped.
+let tokenAutoFilled = false;
+let recallSeq = 0; // guards against out-of-order async token recalls
+async function applyKnownHost(value) {
   const h = knownHosts.find((x) => x.host === value);
   if (!h) return;
   if (h.protocol) els.protocol.value = h.protocol;
   if (h.port) els.port.value = h.port;
   els.allowSelfSigned.checked = !!h.allowSelfSigned;
+  // Recall this realm's own remembered token. A token the USER entered is
+  // never overwritten or cleared — only auto-filled content is. Guarded by a
+  // sequence number so out-of-order recalls can't drop realm A's token into a
+  // form now pointing at realm B.
+  const seq = ++recallSeq;
+  try {
+    const r = await window.arete.recallHost(h.host);
+    if (seq !== recallSeq || els.host.value.trim() !== h.host) return; // superseded
+    const userOwned = !tokenAutoFilled && els.token.value !== '';
+    if (userOwned) return;
+    if (r && r.token) {
+      els.token.value = r.token;
+      tokenAutoFilled = true;
+    } else if (tokenAutoFilled) {
+      els.token.value = '';
+      tokenAutoFilled = false;
+    }
+  } catch (_) { /* keep whatever is typed */ }
 }
 
 // ---- Tabs ----
@@ -184,6 +208,7 @@ async function init() {
   els.host.value = d.host;
   els.port.value = d.port;
   els.token.value = d.token;
+  tokenAutoFilled = !!d.token; // prefilled from settings = ours to replace
   els.allowSelfSigned.checked = !!d.allowSelfSigned;
 
   // user preferences: monitor name + theme + past hosts
@@ -221,11 +246,18 @@ async function doConnect(isAuto) {
   };
   try {
     await window.arete.connect(opts);
-    // main recorded this host on success — refresh the dropdown
+    // main recorded this host on success — refresh the dropdown. The token is
+    // now stored for this realm, so the field's content is ours again.
+    tokenAutoFilled = true;
     const s = await window.arete.getSettings();
     refreshHosts(s.hosts);
   } catch (err) {
     logLine({ level: 'error', message: String(err.message || err), ts: Date.now() });
+    // Protected realms 401 the upgrade when no/invalid token is presented —
+    // say so when the field was empty instead of leaving a bare timeout.
+    if (!opts.token) {
+      logLine({ level: 'warn', message: 'No realm token was sent. If this realm is token-protected, paste its token above (check "Remember token" so auto-connect can use it).', ts: Date.now() });
+    }
     els.connectBtn.disabled = false;
     // a failed auto-connect lands you on Config with the error in the log
     if (isAuto) activateTab('panel-home');
@@ -234,9 +266,12 @@ async function doConnect(isAuto) {
 
 els.form.addEventListener('submit', (e) => { e.preventDefault(); doConnect(false); });
 
-// picking (or exactly typing) a remembered host recalls its port/user/TLS
+// picking (or exactly typing) a remembered host recalls its port/TLS/token
 els.host.addEventListener('input', () => applyKnownHost(els.host.value.trim()));
 els.host.addEventListener('change', () => applyKnownHost(els.host.value.trim()));
+// Any user edit of the token field makes its content user-owned (see
+// tokenAutoFilled) — auto-fill logic may no longer wipe it.
+els.token.addEventListener('input', () => { tokenAutoFilled = false; });
 
 els.disconnectBtn.addEventListener('click', () => window.arete.disconnect());
 
