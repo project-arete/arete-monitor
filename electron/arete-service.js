@@ -296,7 +296,7 @@ export class AreteService extends EventEmitter {
   // =========================================================================
   // A starter shell declares NO Connection Profile. When you add one, follow
   // the project's hard rule FIRST: resolve the CP at
-  //     https://cp.padi.io/profiles/<cp-name>
+  //     https://cp.cnscp.io/<cp-name>:<version>   (the name alone, /<cp-name>, lists its versions)
   // and treat its roles + property directions as the source of truth. Do not
   // proceed with a CP that is absent from that registry.
   //
@@ -319,7 +319,7 @@ export class AreteService extends EventEmitter {
   async declareRole() {
     throw new Error(
       'CP logic not implemented (starter shell). Resolve your CP at ' +
-        'https://cp.padi.io/profiles/<name> first, then implement declareRole() ' +
+        'https://cp.cnscp.io/<name>:<version> first, then implement declareRole() ' +
         'in electron/arete-service.js. See the comment block for a padi.light example.'
     );
   }

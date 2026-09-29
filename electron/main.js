@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 
 import { installSystemIdPatch } from './arete-system-id.js';
 import { AreteService } from './arete-service.js';
+import { createProfiles } from './profiles.js';
 
 // IMPORTANT: get `fs` via createRequire, NOT `import fs from 'node:fs'`. A static
 // ESM fs import here would create the shared 'fs' module facade and snapshot its
@@ -161,26 +162,13 @@ function wireServiceEvents() {
   service.on('keys', (keys) => mainWindow?.webContents.send('arete:keys', keys));
 }
 
-// CP registry cache. Monitor views ask for a profile by name; we fetch it once
-// from cp.padi.io and cache it. Fetching in main keeps the renderer's CSP tight
-// (it never talks to the network directly). Returns null on any failure so the
-// UI degrades gracefully to "not in registry".
-const profileCache = new Map();
-async function fetchProfile(name) {
-  if (!name) return null;
-  if (profileCache.has(name)) return profileCache.get(name);
-  try {
-    const res = await fetch('https://cp.padi.io/profiles/' + encodeURIComponent(name), {
-      headers: { accept: 'application/json' },
-    });
-    const json = res.ok ? await res.json() : null;
-    profileCache.set(name, json);
-    return json;
-  } catch (_) {
-    profileCache.set(name, null);
-    return null;
-  }
-}
+// CP Registry lookup. Monitor views ask for a Profile by name and the version
+// the realm recorded on the capability; the resolver (cp-resolver.js, a stamped
+// copy) reads it from cp.cnscp.io and holds contracts for good. Fetching in main
+// keeps the renderer's CSP tight (it never talks to the network directly). An
+// answer is { ok, profile } or { ok: false, kind }: "not registered" and
+// "registry unavailable" are different things, and an outage is never cached.
+const profiles = createProfiles();
 
 // ---------------------------------------------------------------------------
 // App lifecycle
@@ -313,7 +301,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('arete:getStatus', () => service.getStatus());
   ipcMain.handle('arete:getKeys', () => service.getKeys());
-  ipcMain.handle('arete:getProfile', (_evt, name) => fetchProfile(name));
+  ipcMain.handle('arete:getProfile', (_evt, name, version) => profiles.getProfile(name, version));
   ipcMain.handle('arete:register', async (_evt, override) => {
     const merged = { ...ids, ...(override || {}) };
     return service.registerNodeContext(merged);

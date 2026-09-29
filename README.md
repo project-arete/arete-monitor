@@ -25,7 +25,7 @@ system, and renders the realm live across five views:
 - **Status / Config** — connection status, event log, and realm credentials
 
 It is deliberately **CP-agnostic**: it shows structure, bindings, and raw
-property values (enriched with names/roles from the `cp.padi.io` registry) and
+property values (enriched with names/roles from the `cp.cnscp.io` registry) and
 applies no CP-specific health rules. It declares no CP itself (stub left in
 `arete-service.js`).
 
@@ -159,7 +159,7 @@ around each so you don't have to.
 This shell intentionally stops before declaring a CP. When you add one, follow
 the project rule **first**:
 
-> Resolve the CP in the registry at `https://cp.padi.io/profiles/<name>` and
+> Resolve the CP in the registry at `https://cp.cnscp.io/<name>:<version>` and
 > treat its roles and property directions as the source of truth. If the CP is
 > not in the registry, stop — do not invent it.
 

@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('arete', {
 
   // live monitor data layer
   getKeys: () => ipcRenderer.invoke('arete:getKeys'),
-  getProfile: (name) => ipcRenderer.invoke('arete:getProfile', name),
+  getProfile: (name, version) => ipcRenderer.invoke('arete:getProfile', name, version),
   onKeys: (cb) => {
     const h = (_e, keys) => cb(keys);
     ipcRenderer.on('arete:keys', h);
